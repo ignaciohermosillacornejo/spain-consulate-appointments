@@ -45,7 +45,7 @@ dotenv.config({ path: path.resolve(process.cwd(), `.env.${env}`) });
 
     if (!noAvailability) {
         console.log('Appointment slots available!');
-        await sendPushoverNotification('Appointments available! Go to https://bit.ly/4cFXN5E to schedule your appointment', 'Appointment Alert');
+        await sendPushoverNotification('Appointments available! Go to https://bit.ly/4cFXN5E to schedule your appointment', 'Appointment Alert', 1);
     } else {
         console.log('No appointment slots available.');
         await sendPushoverNotification('Appointment slots not available!', 'Appointment Alert', -2);
