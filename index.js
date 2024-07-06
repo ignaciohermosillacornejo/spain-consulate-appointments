@@ -2,11 +2,17 @@ import { launch } from 'puppeteer';
 import { sendPushoverNotification } from './notify.js';
 
 import dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+
+const env = process.env.NODE_ENV || 'development';
+dotenv.config({ path: path.resolve(process.cwd(), `.env.${env}`) });
+
 
 (async () => {
+    console.log('Starting App');
+    console.log('Environment:', process.env.NODE_ENV);
     // Launch the browser
-    const browser = await launch({ headless: false, devtools: true });
+    const browser = await launch({ headless: process.env.headless || true});
     const page = await browser.newPage();
 
     // Navigate to the URL
