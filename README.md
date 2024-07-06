@@ -39,3 +39,10 @@ I'm using push over for notification
 PUSHOVER_APP_TOKEN=<App key>
 PUSHOVER_USER_KEY=<User or Group key>
 ```
+
+
+## Render
+
+This app is being run on render.com.
+
+There's a known issue where the cache used by puppeteer is not found, `puppeteer.config.cjs` is a workaround where we reset the cache. On render.com you also need to set `PUPPETEER_CACHE_DIR=/opt/render/project/puppeteer` and make your run command `./render-build.sh`
