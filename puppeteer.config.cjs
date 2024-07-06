@@ -1,3 +1,7 @@
+/**
+ * https://pptr.dev/guides/configuration#changing-the-default-cache-directory
+ */
+
 const { join } = require('path');
 
 /**
