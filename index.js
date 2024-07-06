@@ -1,4 +1,8 @@
 import { launch } from 'puppeteer';
+import { sendPushoverNotification } from './notify.js';
+
+import dotenv from 'dotenv';
+dotenv.config();
 
 (async () => {
     // Launch the browser
@@ -35,8 +39,10 @@ import { launch } from 'puppeteer';
 
     if (!noAvailability) {
         console.log('Appointment slots available!');
+        await sendPushoverNotification('Appointments available! Go to https://bit.ly/4cFXN5E to schedule your appointment', 'Appointment Alert');
     } else {
         console.log('No appointment slots available.');
+        await sendPushoverNotification('Appointment slots not available!', 'Appointment Alert', -2);
     }
 
     // Close the browser
