@@ -45,4 +45,4 @@ PUSHOVER_USER_KEY=<User or Group key>
 
 This app is being run on render.com.
 
-There's a known issue where the cache used by puppeteer is not found, `puppeteer.config.cjs` is a workaround where we reset the cache. On render.com you also need to set `PUPPETEER_CACHE_DIR=/opt/render/project/puppeteer` and make your run command `./render-build.sh`
+There's a known issue where the cache used by puppeteer is not found, `puppeteer.config.cjs` is a workaround where we reset the cache. On render.com you also need to set `PUPPETEER_CACHE_DIR=/opt/render/project/puppeteer`. Also use the render-build and render-run commands as per [this](https://github.com/puppeteer/puppeteer/issues/9694#issuecomment-1836455429) comment which fixes the issue.
