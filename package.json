@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "render-install": "npm install && node node_modules/puppeteer/install.mjs",
+    "render-build": "npm install && node node_modules/puppeteer/install.mjs",
     "render-run": "npm install && node node_modules/puppeteer/install.mjs && node index.js"
   },
   "keywords": [],
