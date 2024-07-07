@@ -59,10 +59,12 @@ const checkAppointmentAvailabilityAndNotify = async (maxRetries) => {
             if (!noAvailability) {
                 console.log('Appointment slots available!');
                 await sendPushoverNotification(sucessMessage, 'Appointment Alert', 2);
+                retries = 0;
                 break; // Exit the loop if successful
             } else {
                 console.log('No appointment slots available.');
                 await sendPushoverNotification(failureMessage, 'Appointment Alert', -2);
+                retries = 0;
                 break; // Exit the loop if unsuccessful
             }
         } catch (error) {
