@@ -50,12 +50,12 @@ const checkAppointmentAvailability = async () => {
 
 
 const checkAppointmentAvailabilityAndNotify = async (retries = 2) => {
+    const startTime = Date.now();
     try {
         if (retries === 0) {
             return
         }
-        const startTime = Date.now();
-        console.log(`Starting attempt #${maxRetries - retries}`);
+        console.log(`Starting attempt #${maxRetries - retries + 1}`);
         const noAvailability = await checkAppointmentAvailability();
         if (!noAvailability) {
             console.log('Appointment slots available!');
