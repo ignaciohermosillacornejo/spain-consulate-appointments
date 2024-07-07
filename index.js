@@ -1,56 +1,87 @@
-import { launch } from 'puppeteer';
+import { launch, TimeoutError } from 'puppeteer';
 import { sendPushoverNotification } from './notify.js';
 
 import dotenv from 'dotenv';
 import path from 'path';
 
 const env = process.env.NODE_ENV || 'development';
+const sucessMessage = 'Appointments available! Go to https://bit.ly/4cFXN5E to schedule your appointment';
+const failureMessage = 'No appointment slots available.';
+const maxRetries = 2;
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${env}`) });
+
+const checkAppointmentAvailability = async () => {
+     // Launch the browser
+     const browser = await launch({ headless: process.env.headless || true});
+     const page = await browser.newPage();
+
+     // Navigate to the URL
+     await page.goto('https://www.exteriores.gob.es/Consulados/santiagodechile/es/ServiciosConsulares/Paginas/CitaPrevia.aspx');
+
+     // Click on the "Solicitud de Cita" link
+     const citaLink = 'https://www.citaconsular.es/es/hosteds/widgetdefault/24e329baaaf932b93de4fc7f95bc53535';
+     await page.waitForSelector(`a[href="${citaLink}"]`);
+     await page.click(`a[href="${citaLink}"]`);
+
+
+     // Wait for the new page or tab to load
+     const newPagePromise = new Promise(x => browser.once('targetcreated', target => x(target.page())));
+     const newPage = await newPagePromise;
+     // Handle the alert by accepting it on the new page
+     newPage.on('dialog', async dialog => {
+         await dialog.accept();
+     });
+     // Wait for the button to be available and visible
+     await newPage.waitForSelector('#idCaptchaButton', { visible: true });
+     // Click on the "Continue / Continuar" button
+     await newPage.click('#idCaptchaButton');
+
+     // Check for availability
+     await newPage.waitForSelector('#idDivBktServicesContainer > div:nth-child(2)', { visible: true });
+     const noAvailability = await newPage.evaluate(() => {
+         const widget = document.querySelector('#idDivBktServicesContainer > div:nth-child(2)');
+         return widget && widget.textContent.includes('No hay horas disponibles.');
+       });
+
+    await browser.close();
+
+    return noAvailability;
+}
+
+
+const checkAppointmentAvailabilityAndNotify = async (retries = 2) => {
+    try {
+        if (retries === 0) {
+            return
+        }
+        const startTime = Date.now();
+        console.log(`Starting attempt #${maxRetries - retries}`);
+        const noAvailability = await checkAppointmentAvailability();
+        if (!noAvailability) {
+            console.log('Appointment slots available!');
+            await sendPushoverNotification(sucessMessage, 'Appointment Alert', 2);
+        } else {
+            console.log('No appointment slots available.');
+            await sendPushoverNotification(failureMessage, 'Appointment Alert', -2);
+        }
+    } catch (error) {
+        if (error instanceof TimeoutError) {
+            console.log('A timeout error occurred:', error.message);
+            await checkAppointmentAvailabilityAndNotify(retries - 1);
+        }
+    } finally {
+        const endTime = Date.now();
+        console.log(`Time taken: ${(endTime - startTime) / 1000} seconds`);
+    }
+}
 
 
 (async () => {
     console.log('Starting App');
     console.log('Environment:', process.env.NODE_ENV);
-    // Launch the browser
-    const browser = await launch({ headless: process.env.headless || true});
-    const page = await browser.newPage();
 
-    // Navigate to the URL
-    await page.goto('https://www.exteriores.gob.es/Consulados/santiagodechile/es/ServiciosConsulares/Paginas/CitaPrevia.aspx');
+    const spainTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', timeStyle: 'long', dateStyle: 'long' }).format(new Date());
+    console.log('Current time in Spain:', spainTime);
 
-    // Click on the "Solicitud de Cita" link
-    const citaLink = 'https://www.citaconsular.es/es/hosteds/widgetdefault/24e329baaaf932b93de4fc7f95bc53535';
-    await page.waitForSelector(`a[href="${citaLink}"]`);
-    await page.click(`a[href="${citaLink}"]`);
-
-
-    // Wait for the new page or tab to load
-    const newPagePromise = new Promise(x => browser.once('targetcreated', target => x(target.page())));
-    const newPage = await newPagePromise;
-    // Handle the alert by accepting it on the new page
-    newPage.on('dialog', async dialog => {
-        await dialog.accept();
-    });
-    // Wait for the button to be available and visible
-    await newPage.waitForSelector('#idCaptchaButton', { visible: true });
-    // Click on the "Continue / Continuar" button
-    await newPage.click('#idCaptchaButton');
-
-    // Check for availability
-    await newPage.waitForSelector('#idDivBktServicesContainer > div:nth-child(2)', { visible: true });
-    const noAvailability = await newPage.evaluate(() => {
-        const widget = document.querySelector('#idDivBktServicesContainer > div:nth-child(2)');
-        return widget && widget.textContent.includes('No hay horas disponibles.');
-      });
-
-    if (!noAvailability) {
-        console.log('Appointment slots available!');
-        await sendPushoverNotification('Appointments available! Go to https://bit.ly/4cFXN5E to schedule your appointment', 'Appointment Alert', 1);
-    } else {
-        console.log('No appointment slots available.');
-        await sendPushoverNotification('Appointment slots not available!', 'Appointment Alert', -2);
-    }
-
-    // Close the browser
-    await browser.close();
+    await checkAppointmentAvailabilityAndNotify(maxRetries);
 })();
