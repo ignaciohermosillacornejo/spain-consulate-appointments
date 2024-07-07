@@ -7,7 +7,7 @@ import path from 'path';
 const env = process.env.NODE_ENV || 'development';
 const sucessMessage = 'Appointments available! Go to https://bit.ly/4cFXN5E to schedule your appointment';
 const failureMessage = 'No appointment slots available.';
-const maxRetries = 2;
+const maxRetries = 3;
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${env}`) });
 
 const checkAppointmentAvailability = async () => {
@@ -49,30 +49,37 @@ const checkAppointmentAvailability = async () => {
 }
 
 
-const checkAppointmentAvailabilityAndNotify = async (retries = 2) => {
+const checkAppointmentAvailabilityAndNotify = async (maxRetries) => {
     const startTime = Date.now();
-    try {
-        if (retries === 0) {
-            return
+    let retries = maxRetries;
+    while (retries > 0) {
+        try {
+            console.log(`Starting attempt #${maxRetries - retries + 1}`);
+            const noAvailability = await checkAppointmentAvailability();
+            if (!noAvailability) {
+                console.log('Appointment slots available!');
+                await sendPushoverNotification(sucessMessage, 'Appointment Alert', 2);
+                break; // Exit the loop if successful
+            } else {
+                console.log('No appointment slots available.');
+                await sendPushoverNotification(failureMessage, 'Appointment Alert', -2);
+                break; // Exit the loop if unsuccessful
+            }
+        } catch (error) {
+            if (error instanceof TimeoutError) {
+                console.log('A timeout error occurred:', error.message);
+                retries--;
+                if (retries === 0) {
+                    console.log('Max retries reached, no more attempts.');
+                }
+            } else {
+                console.error('An unexpected error occurred:', error);
+                throw error;
+            }
         }
-        console.log(`Starting attempt #${maxRetries - retries + 1}`);
-        const noAvailability = await checkAppointmentAvailability();
-        if (!noAvailability) {
-            console.log('Appointment slots available!');
-            await sendPushoverNotification(sucessMessage, 'Appointment Alert', 2);
-        } else {
-            console.log('No appointment slots available.');
-            await sendPushoverNotification(failureMessage, 'Appointment Alert', -2);
-        }
-    } catch (error) {
-        if (error instanceof TimeoutError) {
-            console.log('A timeout error occurred:', error.message);
-            await checkAppointmentAvailabilityAndNotify(retries - 1);
-        }
-    } finally {
-        const endTime = Date.now();
-        console.log(`Time taken: ${(endTime - startTime) / 1000} seconds`);
     }
+    const endTime = Date.now();
+    console.log(`Time taken: ${(endTime - startTime) / 1000} seconds`);
 }
 
 
