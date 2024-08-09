@@ -8,12 +8,18 @@ const env = process.env.NODE_ENV || 'development';
 const sucessMessage = 'Appointments available! Go to https://bit.ly/4cFXN5E to schedule your appointment';
 const failureMessage = 'No appointment slots available.';
 const maxRetries = 3;
+const timeOut = 300000; // 300 seconds (5 minutes)
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${env}`) });
 
 const checkAppointmentAvailability = async () => {
+    // Launch the browser
+    const browser = await launch({
+        headless: env !== 'development',
+        timeout: 0, // This disables the default timeout for browser launch.
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        protocolTimeout: timeOut
+    });
     try {
-        // Launch the browser
-        const browser = await launch({ headless: process.env.headless || true});
         const page = await browser.newPage();
 
         // Navigate to the URL
@@ -32,12 +38,12 @@ const checkAppointmentAvailability = async () => {
             await dialog.accept();
         });
         // Wait for the button to be available and visible
-        await newPage.waitForSelector('#idCaptchaButton', { visible: true });
+        await newPage.waitForSelector('#idCaptchaButton', { visible: true, timeout: timeOut });
         // Click on the "Continue / Continuar" button
         await newPage.click('#idCaptchaButton');
 
         // Check for availability
-        await newPage.waitForSelector('#idDivBktServicesContainer > div:nth-child(2)', { visible: true });
+        await newPage.waitForSelector('#idDivBktServicesContainer > div:nth-child(2)', { visible: true, timeout: timeOut });
         const noAvailability = await newPage.evaluate(() => {
             const widget = document.querySelector('#idDivBktServicesContainer > div:nth-child(2)');
             return widget && widget.textContent.includes('No hay horas disponibles.');
