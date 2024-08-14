@@ -8,7 +8,7 @@ const env = process.env.NODE_ENV || 'development';
 const sucessMessage = 'Appointments available! Go to https://bit.ly/4cFXN5E to schedule your appointment';
 const failureMessage = 'No appointment slots available.';
 const maxRetries = 3;
-const timeOut = 30000; // 30 seconds
+const timeOut = 120000; // 2 minutes
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${env}`) });
 
 const checkAppointmentAvailability = async () => {
