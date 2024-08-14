@@ -12,6 +12,12 @@ async function sendPushoverNotification(message, title = 'Notification', priorit
     params.append('message', message);
     params.append('title', title);
     params.append('priority', priority);
+    params.append('ttl', 86400); // expire messages after 1 day
+
+    if (priority === 2) { // https://pushover.net/api#priority2
+        params.append('retry', 60); // Notify user every minute
+        params.append('expire', 1800); // Stop notifying after 30 minutes
+    }
 
     try {
         const response = await fetch(PUSHOVER_API_URL, {
