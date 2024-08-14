@@ -16,13 +16,13 @@ const checkAppointmentAvailability = async () => {
     const browser = await launch({
         headless: env !== 'development',
         timeout: 0, // This disables the default timeout for browser launch.
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--incognito'],
         protocolTimeout: timeOut,
-        defaultBrowserContext: 'incognito' // Create an incognito context by default
     });
     try {
-        const page = await browser.newPage();
-
+        // hacky workarround, new page doesn't use incognito, so we get the default page and use that.
+        const pages = await browser.pages();
+        const page = pages[0];
         // Navigate to the URL
         await page.goto('https://www.exteriores.gob.es/Consulados/santiagodechile/es/ServiciosConsulares/Paginas/CitaPrevia.aspx');
 
