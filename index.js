@@ -17,7 +17,8 @@ const checkAppointmentAvailability = async () => {
         headless: env !== 'development',
         timeout: 0, // This disables the default timeout for browser launch.
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        protocolTimeout: timeOut
+        protocolTimeout: timeOut,
+        defaultBrowserContext: 'incognito' // Create an incognito context by default
     });
     try {
         const page = await browser.newPage();
