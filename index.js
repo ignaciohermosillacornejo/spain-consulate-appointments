@@ -7,8 +7,8 @@ import path from 'path';
 const env = process.env.NODE_ENV || 'development';
 const sucessMessage = 'Appointments available! Go to https://bit.ly/4cFXN5E to schedule your appointment';
 const failureMessage = 'No appointment slots available.';
-const maxRetries = 3;
-const timeOut = 300000; // 300 seconds (5 minutes)
+const maxRetries = 5;
+const timeOut = 30000; // 30 seconds
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${env}`) });
 
 const checkAppointmentAvailability = async () => {
@@ -43,15 +43,14 @@ const checkAppointmentAvailability = async () => {
         await newPage.click('#idCaptchaButton');
 
         // Check for availability
-        await newPage.waitForSelector('#idDivBktServicesContainer > div:nth-child(2)', { visible: true, timeout: timeOut });
-        const noAvailability = await newPage.evaluate(() => {
-            const widget = document.querySelector('#idDivBktServicesContainer > div:nth-child(2)');
-            return widget && widget.textContent.includes('No hay horas disponibles.');
+        await newPage.waitForSelector('#idListServices', { visible: true, timeout: timeOut });
+        const appointmentAvailable = await newPage.evaluate(() => {
+            const widget = document.querySelector('#idListServices');
+            return widget && widget.textContent.includes('LEY MEMORIA');
           });
-
        await browser.close();
 
-       return noAvailability;
+       return appointmentAvailable;
     } catch (error) {
         browser.close(); // make sure we close even if we error, to avoid OOM
         throw error;
@@ -66,8 +65,8 @@ const checkAppointmentAvailabilityAndNotify = async (maxRetries) => {
         try {
             startTime = Date.now();
             console.log(`Starting attempt #${maxRetries - retries + 1}`);
-            const noAvailability = await checkAppointmentAvailability();
-            if (!noAvailability) {
+            const appointmentAvailable = await checkAppointmentAvailability();
+            if (appointmentAvailable) {
                 console.log('Appointment slots available!');
                 await sendPushoverNotification(sucessMessage, 'Appointment Alert', 2);
                 break; // Exit the loop if successful
