@@ -7,7 +7,7 @@ import path from 'path';
 const env = process.env.NODE_ENV || 'development';
 const sucessMessage = 'Appointments available! Go to https://bit.ly/4cFXN5E to schedule your appointment';
 const failureMessage = 'No appointment slots available.';
-const maxRetries = 5;
+const maxRetries = 3;
 const timeOut = 30000; // 30 seconds
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${env}`) });
 
