@@ -7,6 +7,7 @@ import path from 'path';
 const env = process.env.NODE_ENV || 'development';
 const sucessMessage = 'Appointments available! Go to https://bit.ly/4cFXN5E to schedule your appointment';
 const failureMessage = 'No appointment slots available.';
+const timeoutMessage = 'Request timed out.';
 const maxRetries = 3;
 const timeOut = 120000; // 2 minutes
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${env}`) });
@@ -82,6 +83,7 @@ const checkAppointmentAvailabilityAndNotify = async (maxRetries) => {
                 retries--;
                 if (retries === 0) {
                     console.log('Max retries reached, no more attempts.');
+                    await sendPushoverNotification(timeoutMessage, 'Appointment Alert', -2);
                 }
             } else {
                 console.error('An unexpected error occurred:', error);
